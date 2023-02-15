@@ -1,8 +1,10 @@
 /.vscode
 /build
 /dist
+/vcpkg_installed
 __pycache__
 *.egg-info
 *.pyc
 *.pyd
+*.dll
 *.so

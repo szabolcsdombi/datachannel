@@ -45,6 +45,19 @@ void open_callback(int dc, void * ptr) {
     set_event(self->dc_ready);
 }
 
+PyObject * meth_logger(PyObject * self, PyObject * args, PyObject * kwargs) {
+    const char * keywords[] = {"level", NULL};
+
+    int level = RTC_LOG_INFO;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|i", (char **)keywords, &level)) {
+        return NULL;
+    }
+
+    rtcInitLogger((rtcLogLevel)level, NULL);
+    Py_RETURN_NONE;
+}
+
 Peer * meth_peer(PyObject * self, PyObject * args, PyObject * kwargs) {
     const char * keywords[] = {"sdp", NULL};
 
@@ -67,7 +80,7 @@ Peer * meth_peer(PyObject * self, PyObject * args, PyObject * kwargs) {
     rtcConfiguration config = {};
     res->pc = rtcCreatePeerConnection(&config);
     rtcSetUserPointer(res->pc, res);
-	rtcSetLocalDescriptionCallback(res->pc, local_description_callback);
+    rtcSetLocalDescriptionCallback(res->pc, local_description_callback);
 
     if (sdp == Py_None) {
         res->dc = rtcCreateDataChannel(res->pc, "data");
@@ -82,9 +95,10 @@ Peer * meth_peer(PyObject * self, PyObject * args, PyObject * kwargs) {
 }
 
 PyObject * Peer_meth_sdp(Peer * self) {
-    char sdp[4096] = {};
-    rtcGetLocalDescription(self->pc, sdp, sizeof(sdp));
-    return PyBytes_FromString(sdp);
+    int size = rtcGetLocalDescription(self->pc, NULL, 0);
+    PyObject * res = PyBytes_FromStringAndSize(NULL, size);
+    rtcGetLocalDescription(self->pc, PyBytes_AsString(res), size);
+    return res;
 }
 
 PyObject * Peer_meth_connect(Peer * self, PyObject * args, PyObject * kwargs) {
@@ -110,15 +124,13 @@ PyObject * Peer_meth_buffered(Peer * self) {
 }
 
 PyObject * Peer_meth_recv(Peer * self) {
-    static char buffer[16384] = {};
-    int size = sizeof(buffer);
-    if (rtcReceiveMessage(self->dc, buffer, &size) < 0) {
+    int size = 0;
+    if (rtcReceiveMessage(self->dc, NULL, &size) < 0) {
         Py_RETURN_NONE;
     }
-    if (size < 0) {
-        size = -size - 1;
-    }
-    return PyBytes_FromStringAndSize(buffer, size);
+    PyObject * res = PyBytes_FromStringAndSize(NULL, size < 0 ? -size - 1 : size);
+    rtcReceiveMessage(self->dc, PyBytes_AsString(res), &size);
+    return res;
 }
 
 PyObject * Peer_meth_send(Peer * self, PyObject * arg) {
@@ -152,6 +164,7 @@ PyType_Slot Peer_slots[] = {
 PyType_Spec Peer_spec = {"datachannel.Peer", sizeof(Peer), 0, Py_TPFLAGS_DEFAULT, Peer_slots};
 
 PyMethodDef module_methods[] = {
+    {"logger", (PyCFunction)meth_logger, METH_VARARGS | METH_KEYWORDS},
     {"peer", (PyCFunction)meth_peer, METH_VARARGS | METH_KEYWORDS},
     {},
 };
@@ -159,7 +172,6 @@ PyMethodDef module_methods[] = {
 PyModuleDef module_def = {PyModuleDef_HEAD_INIT, "datachannel", NULL, -1, module_methods};
 
 extern "C" PyObject * PyInit_datachannel() {
-    // rtcInitLogger(RTC_LOG_INFO, NULL);
     rtcPreload();
     PyObject * module = PyModule_Create(&module_def);
     Peer_type = (PyTypeObject *)PyType_FromSpec(&Peer_spec);

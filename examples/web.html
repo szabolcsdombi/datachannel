@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+<script>
+
+let pc = new RTCPeerConnection();
+let dc = null;
+
+pc.ondatachannel = (event) => {
+  dc = event.channel;
+  dc.binaryType = "arraybuffer";
+  dc.onopen = () => {
+    console.log('sendChannel has opened');
+  };
+  dc.onclose = () => {
+    console.log('sendChannel has closed');
+  };
+  dc.onmessage = (event) => {
+    console.log(event.data);
+  };
+};
+
+const startSession = async (sdp) => {
+  pc.setRemoteDescription({sdp: atob(sdp), type: "offer"});
+  const local = await pc.createAnswer();
+  pc.setLocalDescription(local);
+  console.log(btoa(local.sdp));
+};
+
+</script>
+</body>
+</html>

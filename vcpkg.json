@@ -1,0 +1,9 @@
+{
+  "name": "example",
+  "version": "1.0",
+  "builtin-baseline": "93895b28ea7bc8cda10f156c5d336f3fc070f8b1",
+  "dependencies": ["libdatachannel"],
+  "overrides": [
+    {"name": "libdatachannel", "version": "0.18.2"}
+  ]
+}

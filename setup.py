@@ -1,13 +1,12 @@
 import os
 import sys
+import glob
 
 from setuptools import Extension, setup
 
-DEPENDENCIES = os.environ['DEPENDENCIES']
-# C:/vcpkg/installed/x64-windows
-# /opt/vcpkg/installed/x64-linux
-
 libraries = ['datachannel']
+
+deps = os.path.abspath(glob.glob('vcpkg_installed/x64-*/')[0])
 
 if sys.platform.startswith('linux'):
     libraries.extend(['ssl', 'crypto', 'juice', 'usrsctp'])
@@ -19,15 +18,15 @@ ext = Extension(
         ('Py_LIMITED_API', 0x03090000),
         ('PY_SSIZE_T_CLEAN', None),
     ],
-    include_dirs=[f'{DEPENDENCIES}/include'],
-    library_dirs=[f'{DEPENDENCIES}/lib'],
+    include_dirs=[f'{deps}/include'],
+    library_dirs=[f'{deps}/lib'],
     libraries=libraries,
     py_limited_api=True,
 )
 
 setup(
     name='datachannel',
-    version='0.2.0',
+    version='0.3.0',
     ext_modules=[ext],
-    data_files=[('.', ['juice.dll', 'libcrypto-3-x64.dll', 'libssl-3-x64.dll'])],
+    data_files=[('.', ['datachannel.dll', 'juice.dll', 'legacy.dll', 'libcrypto-3-x64.dll', 'libssl-3-x64.dll'])],
 )
