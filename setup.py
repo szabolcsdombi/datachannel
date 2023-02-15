@@ -12,7 +12,7 @@ if sys.platform.startswith('linux'):
     libraries.extend(['ssl', 'crypto', 'juice', 'usrsctp'])
 
 ext = Extension(
-    name='datachannel',
+    name='datachannel.datachannel',
     sources=['./datachannel.cpp'],
     define_macros=[
         ('Py_LIMITED_API', 0x03090000),
@@ -26,7 +26,20 @@ ext = Extension(
 
 setup(
     name='datachannel',
-    version='0.3.0',
+    version='0.4.0',
+    packages=['datachannel'],
     ext_modules=[ext],
-    data_files=[('.', ['datachannel.dll', 'juice.dll', 'legacy.dll', 'libcrypto-3-x64.dll', 'libssl-3-x64.dll'])],
+    # package_data={
+    #     'datachannel': [
+    #         'datachannel.dll',
+    #         'juice.dll',
+    #         'legacy.dll',
+    #         'libcrypto-3-x64.dll',
+    #         'libssl-3-x64.dll',
+    #         'datachannel.pyd',
+    #         'datachannel.abi3.so',
+    #     ],
+    # },
+    # include_package_data=True,
+    python_requires='>=3.9',
 )
